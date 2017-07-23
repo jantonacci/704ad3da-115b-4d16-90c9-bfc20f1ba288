@@ -59,7 +59,7 @@ class PingWin(Base):
         super().__init__(command=command, host=host, **kwargs)
 
 
-class PingPosix(Base):
+class PingLinux(Base):
     def __init__(self, host=None, options='', **kwargs):
         self._host = host
         self.metainfo = {"category": "returncode", "type": int}
@@ -71,8 +71,8 @@ def ping_host(host=None, options='', **kwargs):
     platform = sys.platform
     if platform == 'win32':
         return PingWin(host=host, options=options, platform=platform, **kwargs)
-    elif platform == 'posix':
-        return PingPosix(host=host, options=options, platform=platform, **kwargs)
+    elif platform == 'linux':
+        return PingLinux(host=host, options=options, platform=platform, **kwargs)
 
 
 class ScanHost(Base):
@@ -92,13 +92,13 @@ def example():
     platform = sys.platform
     if platform == 'win32':
         results = [Base(command='cmd.exe /c dir')]
-    elif platform == 'posix':
-        results = [Base(command='bash ls -lA')]
+    elif platform == 'linux':
+        results = [Base(command='ls -lA')]
 
-    results.extend([ScanHost(host='0.0.0.0'),
-                    ping_host(host='0.0.0.0'),
-                    ScanHost(host='localhost'),
-                    ping_host(host='localhost')])
+    results.append(ScanHost(host='0.0.0.0'))
+    results.append(ping_host(host='0.0.0.0'))
+    results.append(ScanHost(host='localhost'))
+    results.append(ping_host(host='localhost'))
 
     for item in results:
         # print(item.results)
