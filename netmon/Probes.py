@@ -8,7 +8,6 @@ import time
 class Base(object):
     def __init__(self, command=None, run=True, **kwargs):
         self.command = command
-        self.results = []
         self._CompletedProcess = None
         self.results = {"name": self.__class__.__name__,
                         "args": shlex.split(command),
@@ -30,6 +29,7 @@ class Base(object):
         self.results["returncode"] = self._CompletedProcess.returncode,
         self.results["stdout"] = self._CompletedProcess.stdout.decode('UTF-8')
         self.results["time"] = time.time()
+
     @property
     def args(self):
         return self._CompletedProcess.args
@@ -101,8 +101,8 @@ def example():
                     ping_host(host='localhost')])
 
     for item in results:
-        print(item.results)
-        # print(item.json)
+        # print(item.results)
+        print(item.json)
 
 
 if __name__ == '__main__':

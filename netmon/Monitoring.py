@@ -2,6 +2,7 @@
 
 import Probes
 import time
+import json
 
 
 class ProbeExec(object):
@@ -45,5 +46,4 @@ if __name__ == "__main__":
                        probes=[Probes.ScanHost, Probes.ping_host])
     probes.exec_local()
     probes.exec_remote()
-    for result in probes.results:
-        print(result)
+    print(json.dumps(probes.results, sort_keys=True, indent=4))
