@@ -1,6 +1,11 @@
-__all__ = ["Probes.Base",
-           "Probes.ping_host",
-           "Probes.PingWin",
-           "Probes.PingPosix",
-           "Probes.ScanHost",
-           "Monitoring.ProbesLocal"]
+__all__ = ["ProbesLocal.Base",
+           "ProbesLocal.ping_host",
+           "ProbesLocal.PingWin",
+           "ProbesLocal.PingPosix",
+           "ProbesLocal.ScanHost",
+           "ProbesRemote.Base",
+           "ProbesRemote.ping_host",
+           "ProbesRemote.PingPosix",
+           "ProbesRemote.ScanHost",
+           "NetMon.Tasks",
+           "NetMon.daemon"]

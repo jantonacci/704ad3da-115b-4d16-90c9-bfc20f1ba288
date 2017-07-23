@@ -4,15 +4,20 @@ import shlex
 import json
 import sys
 import time
+import re
 
 class Base(object):
+    """
+    Runs any local command and captures results
+    """
     def __init__(self, command=None, run=True, **kwargs):
         self.command = command
         self._CompletedProcess = None
         self.results = {"name": self.__class__.__name__,
-                        "args": shlex.split(command),
-                        "returncode": 127,
+                        "args": command,
+                        "returncode": -1,
                         "stdout": "None",
+                        "observation_point": "local_exec",
                         "time": time.time()}
         for key, value in kwargs.items():
             self.results[key] = value
@@ -21,18 +26,23 @@ class Base(object):
 
     def run(self):
         try:
+            # subprocess.run ONLY exists in Python 3.5 or later, see README.md
             self._CompletedProcess = subprocess.run(shlex.split(self.command), stdout=subprocess.PIPE)
         except Exception as err:
             # TODO: additional error handling here
             raise Exception(err)
-        self.results["args"] = self._CompletedProcess.args,
-        self.results["returncode"] = self._CompletedProcess.returncode,
-        self.results["stdout"] = self._CompletedProcess.stdout.decode('UTF-8')
-        self.results["time"] = time.time()
+        self._results_update()
 
-    @property
-    def args(self):
-        return self._CompletedProcess.args
+    def _results_update(self):
+        try:
+            stdout = self._CompletedProcess.stdout.decode('UTF-8').strip()
+            self.results["stdout"] = re.sub(r"( |\t)*(\n|\r\n?)( |\t)*",'', stdout)
+            self.results["args"] = self._CompletedProcess.args
+            self.results["returncode"] = self._CompletedProcess.returncode
+            self.results["time"] = time.time()
+        except Exception as err:
+            # TODO: additional error handling here
+            pass
 
     @property
     def json(self):
@@ -42,16 +52,11 @@ class Base(object):
             # TODO: additional error handling here
             raise Exception(err)
 
-    @property
-    def returncode(self):
-        return self._CompletedProcess.returncode
-
-    @property
-    def stdout(self):
-        return self._CompletedProcess.stdout.decode('UTF-8')
-
 
 class PingWin(Base):
+    """
+    Runs ping command with correct parameters for MicroSoft Windows version
+    """
     def __init__(self, host=None, options='', **kwargs):
         self._host = host
         self.metainfo = {"category": "returncode", "type": int}
@@ -60,6 +65,9 @@ class PingWin(Base):
 
 
 class PingLinux(Base):
+    """
+    Runs ping command with correct parameters for Linux version
+    """
     def __init__(self, host=None, options='', **kwargs):
         self._host = host
         self.metainfo = {"category": "returncode", "type": int}
@@ -68,6 +76,9 @@ class PingLinux(Base):
 
 
 def ping_host(host=None, options='', **kwargs):
+    """
+    Runs ping command with correct parameters for the current system
+    """
     platform = sys.platform
     if platform == 'win32':
         return PingWin(host=host, options=options, platform=platform, **kwargs)
@@ -76,18 +87,24 @@ def ping_host(host=None, options='', **kwargs):
 
 
 class ScanHost(Base):
+    """
+    Runs NMap ping and portscan command for a single host, checks results and modifies returncode
+    """
     def __init__(self, host=None, options='', **kwargs):
         self._host = host
         self.metainfo = {"category": "returncode", "type": int}
         command = 'nmap --unprivileged -T5 -nF --open -oG - %s %s' % (options, host)
         super().__init__(command=command, host=host, **kwargs)
-        if 'Status: Up' in self.stdout:
+        if 'Status: Up' in self.results.get('stdout') or '/open/tcp//' in self.results.get('stdout'):
             self.results['returncode'] = 0
         else:
             self.results['returncode'] = 1
 
 
 def example():
+    """
+    Run a series of remote probes as a demonstration
+    """
     results = []
     platform = sys.platform
     if platform == 'win32':
@@ -106,4 +123,7 @@ def example():
 
 
 if __name__ == '__main__':
+    """
+    Run a series of remote probes as a demonstration
+    """
     example()
